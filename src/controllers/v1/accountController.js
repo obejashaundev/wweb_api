@@ -1,10 +1,13 @@
-class accountController{
-    signin = function(req, res, next) {
-        res.send('sign in route')
-    }
-    signup = function(req, res, next) {
-        res.send('sign up route')
-    }
+
+function signIn(req, res, next){
+    res.send('sign in route')
 }
 
-module.exports = new accountController()
+function signUp(req, res, next) {
+    res.send('sign up route')
+}
+
+module.exports = {
+    signIn,
+    signUp
+}

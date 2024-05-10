@@ -1,10 +1,10 @@
 const { Router } = require('express')
-const accountController = require('../../controllers/v1/accountController')
-const errorController = require('../../controllers/v1/errorController')
+const { signIn, signUp } = require('../../controllers/v1/accountController')
+const { internalException, notfoundException, unauthorizeException} = require('../../controllers/v1/errorController')
 const router = Router()
 
-router.get('/signin', accountController.signin, errorController.internal)
+router.get('/signin', signIn, internalException)
 
-router.get('/signup', accountController.signup, errorController.internal)
+router.get('/signup', signUp, internalException)
 
 module.exports = router

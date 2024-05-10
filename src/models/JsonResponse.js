@@ -1,8 +1,11 @@
 class JsonResponse {
-    static success = 'success'
-    static error = 'error'
-    constructor({ status = JsonResponse.success, data = null, message = null }) {
-        this.status = status
+    static ok = 'ok'
+    static serverException = 'server exception'
+    static notFoundException = 'not found exception'
+    static unauthotizeException = 'unauthorize exception'
+    constructor({ statusCode = 200, statusMessage = JsonResponse.ok, data = null, message = null }) {
+        this.statusCode = statusCode
+        this.statusMessage = statusMessage
         this.data = data
         this.message = message
     }
