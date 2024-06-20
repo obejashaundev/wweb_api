@@ -1,51 +1,57 @@
 const express = require('express');
-const app = express();
+const http = require('http');
+const { Server } = require('socket.io');
 const bodyParser = require('body-parser');
-const routerv1 = require('./routes/v1/index')
+const WhatsAppManager = require('./clients');
 
-// To parse URL encoded data
-app.use(bodyParser.urlencoded({ extended: true }));
-// To parse json data
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
 app.use(bodyParser.json());
 
+app.post('/create-client', (req, res) => {
+    const { id } = req.body;
+    if (WhatsAppManager.getClient(id)) {
+        return res.status(400).send('Client already exists');
+    }
+    WhatsAppManager.createClient(id, io);
+    res.send('Client created successfully');
+});
 
-app.use('/v1', routerv1)
+app.get('/contacts/:id', async (req, res) => {
+    const client = WhatsAppManager.getClient(req.params.id);
+    if (!client) {
+        return res.status(404).send('Client not found');
+    }
+    const contacts = await client.getContacts();
+    res.json(contacts);
+});
 
-app.get('/', (req, res) => res.send('Hello World!'));
+app.post('/send-message/:id', async (req, res) => {
+    const { id } = req.params;
+    const { number, message } = req.body;
+    const client = WhatsAppManager.getClient(id);
+    if (!client) {
+        return res.status(404).send('Client not found');
+    }
+    const chatId = `${number}@c.us`;
+    try {
+        await client.sendMessage(chatId, message);
+        res.send('Message sent successfully');
+    } catch (error) {
+        res.status(500).send('Failed to send message');
+    }
+});
 
-app.listen(3000, () => console.log('API listening on http://localhost:3000'));
+io.on('connection', (socket) => {
+    console.log('A user connected');
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
+});
 
-// const { Client } = require('whatsapp-web.js');
-// const qrcode = require('qrcode-terminal');
-
-// const client = new Client({
-//     webVersionCache: {
-//         type: "remote",
-//         remotePath:
-//             "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
-//     },
-// });
-
-// client.on('loading_screen', (percent, message) => {
-//     console.log('LOADING SCREEN', percent, message);
-// });
-
-// client.on('ready', () => {
-//     console.log('Client is ready!');
-// });
-
-// client.on('qr', qr => {
-//     qrcode.generate(qr, { small: true });
-// });
-
-// // Listening to all incoming messages
-// client.on('message_create', message => {
-//     console.log(message.body);
-//     if (message.body === '!ping') {
-//         // reply back "pong" directly to the message
-//         message.reply('pong');
-//     }
-// });
-
-
-// client.initialize();
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
